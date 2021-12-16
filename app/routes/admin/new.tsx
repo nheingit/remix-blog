@@ -1,5 +1,11 @@
-import { Form, redirect, ActionFunction, useActionData, useTransition } from "remix"
-import { createPost } from "~/post"
+import {
+  Form,
+  redirect,
+  ActionFunction,
+  useActionData,
+  useTransition,
+} from "remix";
+import { createPost } from "~/post";
 import invariant from "tiny-invariant";
 
 type PostError = {
@@ -9,62 +15,50 @@ type PostError = {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  await new Promise(res => setTimeout(res, 1000));
+  await new Promise((res) => setTimeout(res, 1000));
 
-  const formData = await  request.formData()
+  const formData = await request.formData();
 
-  const title = formData.get("title")
-  const slug = formData.get("slug")
-  const markdown = formData.get("markdown")
-
+  const title = formData.get("title");
+  const content = formData.get("content");
 
   const errors: PostError = {};
   if (!title) errors.title = true;
-  if (!slug) errors.slug = true;
-  if (!markdown) errors.markdown = true;
+  if (!content) errors.markdown = true;
 
   if (Object.keys(errors).length) {
-    return errors
+    return errors;
   }
   invariant(typeof title === "string");
-  invariant(typeof slug === "string");
-  invariant(typeof markdown === "string");
-  
-  await createPost({ title, slug, markdown})
+  invariant(typeof content === "string");
 
-  return redirect("/admin")
+  await createPost({ title, content });
 
-}
+  return redirect("/admin");
+};
 
 export default function NewPost() {
- const errors = useActionData();
- const transition = useTransition()
+  const errors = useActionData();
+  const transition = useTransition();
 
- return (
+  return (
     <Form method="post">
       <p>
         <label>
-          Post Title:{" "}
-          {errors?.title && <em>Title is required</em>}
+          Post Title: {errors?.title && <em>Title is required</em>}
           <input type="text" name="title" />
         </label>
       </p>
       <p>
-        <label>
-          Post Slug:{" "}
-          {errors?.slug && <em>Slug is required</em>}
-          <input type="text" name="slug" />
-        </label>
-      </p>
-      <p>
-        <label htmlFor="markdown">Markdown:</label>{" "}
-        {errors?.markdown && <em>Markdown is required</em>}
+        <label htmlFor="content">Content:</label>{" "}
+        {errors?.content && <em>Content is required</em>}
         <br />
-        <textarea rows={20} name="markdown" />
+        <textarea rows={20} name="content" />
       </p>
       <p>
-        <button type="submit">{transition.submission
-            ? "Creating...": "Create Post"}</button>
+        <button type="submit">
+          {transition.submission ? "Creating..." : "Create Post"}
+        </button>
       </p>
     </Form>
   );

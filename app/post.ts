@@ -1,71 +1,32 @@
-import path from 'path';
-import fs from "fs/promises";
-import parseFrontMatter from "front-matter"
-import invariant from "tiny-invariant";
-import { marked } from 'marked';
-
+import { Post } from ".prisma/client";
+import { redirect } from "@remix-run/server-runtime";
+import { db } from "./utils/db.server";
 
 export type NewPost = {
   title: string;
-  slug: string;
-  markdown: string;
-}
-
-export type Post = {
-  slug: string;
-  title: string;
+  content: string;
 };
 
 export type PostMarkdownAttributes = {
   title: string;
-}
-
-const postPath = path.join(__dirname, "..", "posts")
-
-function isValidPostAttributes(attributes: any): attributes is PostMarkdownAttributes {
-  return attributes?.title;
-}
+};
 
 export async function getPosts() {
-
-  const dir = await fs.readdir(postPath);
-
-  return Promise.all(
-    dir.map(async filename => {
-      const file = await fs.readFile(path.join(postPath, filename))
-      const {attributes} = parseFrontMatter(file.toString())
-      invariant(
-        isValidPostAttributes(attributes),
-        `${filename} has bad meta data!`
-      );
-
-      return {
-        slug: filename.replace(/\.md$/, ""),
-        title: attributes.title
-      }
-    })
-  )
- 
+  return await db.post.findMany();
 }
 
-export async function getPost(slug: string) {
-  const filepath = path.join(postPath, slug + ".md");
-  const file = await fs.readFile(filepath)
-  const {attributes, body} = parseFrontMatter(file.toString())
-
-  invariant(
-    isValidPostAttributes(attributes),
-     `Post ${filepath} is missing attributes`
-     );
-  const html = marked(body)
-  return { slug,html, title: attributes.title }
+export async function getPost(postId: string) {
+  return await db.post.findUnique({
+    where: { id: postId },
+  });
 }
 
 export async function createPost(post: NewPost) {
-  const md = `---\ntitle: ${post.title}\n---\n${post.markdown}`
-  await fs.writeFile(
-    path.join(postPath, post.slug + '.md'),
-    md
-  )
-  return post.slug
+  const newPost = await db.post.create({
+    data: {
+      title: post.title,
+      content: post.content,
+    },
+  });
+  return getPost(newPost.id);
 }

@@ -11,25 +11,18 @@ datasource db {
 }
 
 model Post {
-  id        Int     @id @default(autoincrement())
+  id        String     @id @default(uuid())
   title     String
-  content   String?
+  content   String
   published Boolean @default(false)
   author    User?   @relation(fields: [authorId], references: [id])
-  authorId  String
+  authorId  String?
 }
 
 model User {
   id    String     @id @default(uuid())
-  address String  @unique
-  authDetail  AuthDetail @relation(fields: [authDetailId], references: [id])
-  authDetailId String
+  name String  @unique
   posts Post[]
 }
 
-model AuthDetail {
-  id String @id @default(uuid())
-  nonce String
-  timestamp DateTime @default(now())
-  User User?
-}
+

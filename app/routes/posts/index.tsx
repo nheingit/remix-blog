@@ -1,10 +1,10 @@
 import { Link, useLoaderData } from "remix";
 import { getPosts } from "~/post";
-import type { Post } from "~/post";
+import { Post } from "@prisma/client";
 
 export const loader = () => {
-  return getPosts()
-}
+  return getPosts();
+};
 
 export default function Posts() {
   const posts = useLoaderData<Post[]>();
@@ -12,9 +12,9 @@ export default function Posts() {
     <div>
       <h1>Posts</h1>
       <ul>
-        {posts.map(post => (
-          <li key={post.slug}>
-            <Link to={post.slug}>{post.title}</Link>
+        {posts.map((post) => (
+          <li key={post.id}>
+            <Link to={post.id.toString()}>{post.title}</Link>
           </li>
         ))}
       </ul>
