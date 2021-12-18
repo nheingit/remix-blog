@@ -21,7 +21,8 @@ model Post {
 
 model User {
   id    String     @id @default(uuid())
-  name String  @unique
+  address String  @unique
+  nonce Int
   posts Post[]
 }
 

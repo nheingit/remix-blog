@@ -2,11 +2,19 @@ import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
 
 async function seed() {
-  const noah = await db.user.findFirst({
+  let noah = await db.user.findFirst({
     where: {
-      name: "noah",
+      address: "0xC90C74fAC03a1Fd3D43aC94418019901F6a8Dd56",
     },
   });
+  if (!noah) {
+    noah = await db.user.create({
+      data: {
+        address: "0xC90C74fAC03a1Fd3D43aC94418019901F6a8Dd56",
+        nonce: Math.floor(Math.random() * 10000000),
+      },
+    });
+  }
   await Promise.all(
     getPosts().map((post) => {
       const data = { authorId: noah?.id, ...post };
