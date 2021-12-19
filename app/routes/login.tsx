@@ -13,6 +13,8 @@ import { ethers } from "ethers";
 import stylesUrl from "../styles/login.css";
 import { useState } from "react";
 import { db } from "~/utils/db.server";
+import { getOrCreateUser, verifyUser } from "~/login";
+import invariant from "tiny-invariant";
 declare global {
   interface Window {
     ethereum: any;
@@ -37,7 +39,9 @@ const getWeb3 = async () => {
       await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
       const address = await signer.getAddress();
-      return address;
+      const nonce = Math.floor(Math.random() * 10000002).toString();
+      const signature = await signer.signMessage(nonce);
+      return [address, signature, nonce];
     } else {
       // TODO: make a more robust error here
       return console.error(
@@ -70,45 +74,33 @@ export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
   console.log(request);
   const address = form.get("ethAddress");
+  const signature = form.get("signature");
+  const nonce = form.get("nonce");
+  if (!signature || typeof signature !== "string")
+    return new Error("no signature provided");
   if (!address || !isAddress(address)) {
     console.log("form.get(address) did not work");
     return;
   }
-  let user = await db.user.findUnique({
-    where: {
-      address: address as string,
-    },
-  });
-  if (user) {
-    await db.user.update({
-      where: {
-        address: user.address,
-      },
-      data: {
-        nonce: Math.floor(Math.random() * 10000000);
-      }
-    })
-  }
-  // TODO: Log in the user
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        address: address.toString(),
-        nonce: Math.floor(Math.random() * 10000000),
-      },
-    });
-  }
+  if (!nonce || typeof nonce !== "string") return new Error("no nonce found");
+  const user = await getOrCreateUser(address as string);
+  const isAuthenticated = await verifyUser(user, signature, nonce);
+  console.log("isAuthenticaed object", isAuthenticated);
+
   return redirect("/admin");
 };
 
 export default function Login() {
-  const actionData = useActionData<ActionData>();
   const submit = useSubmit();
-  async function handleLogin() {
-    const ethAddress = await getWeb3();
+  async function handleRegister() {
+    // @ts-ignore
+    const [ethAddress, signature, nonce] = await getWeb3();
+
     const formData = new FormData();
     if (!ethAddress) return "failed to get the address";
     formData.append("ethAddress", ethAddress);
+    formData.append("signature", signature);
+    formData.append("nonce", nonce);
     submit(formData, {
       action: "login/?index",
       method: "post",
@@ -121,16 +113,11 @@ export default function Login() {
     <div className="container">
       <div className="content" data-light="">
         <h1>Login</h1>
-        <button onClick={handleLogin}>login</button>
+        <button onClick={handleRegister}>Register</button>
       </div>
       <div className="links">
         <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/jokes">Jokes</Link>
-          </li>
+          <li>{}</li>
         </ul>
       </div>
     </div>
