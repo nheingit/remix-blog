@@ -15,6 +15,7 @@ import { useState } from "react";
 import { db } from "~/utils/db.server";
 import { getOrCreateUser, verifyUser } from "~/login";
 import invariant from "tiny-invariant";
+import { createUserSession } from "~/utils/session.server";
 declare global {
   interface Window {
     ethereum: any;
@@ -85,19 +86,19 @@ export const action: ActionFunction = async ({ request }) => {
   if (!nonce || typeof nonce !== "string") return new Error("no nonce found");
   const user = await getOrCreateUser(address as string);
   const isAuthenticated = await verifyUser(user, signature, nonce);
-  console.log("isAuthenticaed object", isAuthenticated);
-
-  return redirect("/admin");
+  if (!isAuthenticated) return console.log("user is not authenticated");
+  return createUserSession(user.id, "/admin");
 };
 
 export default function Login() {
+  const actionData = useActionData();
   const submit = useSubmit();
   async function handleRegister() {
     // @ts-ignore
     const [ethAddress, signature, nonce] = await getWeb3();
 
     const formData = new FormData();
-    if (!ethAddress) return "failed to get the address";
+    if (!ethAddress || !signature || !nonce) return badRequest(actionData);
     formData.append("ethAddress", ethAddress);
     formData.append("signature", signature);
     formData.append("nonce", nonce);
@@ -113,7 +114,7 @@ export default function Login() {
     <div className="container">
       <div className="content" data-light="">
         <h1>Login</h1>
-        <button onClick={handleRegister}>Register</button>
+        <button onClick={handleRegister}>Register/Login</button>
       </div>
       <div className="links">
         <ul>
