@@ -73,7 +73,6 @@ export const links: LinksFunction = () => {
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
-  console.log(request);
   const address = form.get("ethAddress");
   const signature = form.get("signature");
   const nonce = form.get("nonce");

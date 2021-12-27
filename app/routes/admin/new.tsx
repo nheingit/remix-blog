@@ -4,19 +4,45 @@ import {
   ActionFunction,
   useActionData,
   useTransition,
+  json,
 } from "remix";
 import { createPost } from "~/post";
+import { requireUserId } from "~/utils/session.server";
 import invariant from "tiny-invariant";
 
 type PostError = {
   title?: boolean;
-  slug?: boolean;
-  markdown?: boolean;
+  content?: boolean;
 };
 
-export const action: ActionFunction = async ({ request }) => {
-  await new Promise((res) => setTimeout(res, 1000));
+type ActionData = {
+  formError?: string;
+  fieldErrors?: {
+    title: string | undefined;
+    content: string | undefined;
+  };
+  fields?: {
+    title: string;
+    content: string;
+  };
+};
 
+function validatePostContent(content: string) {
+  if (content.length < 10) {
+    return `That post is too short`;
+  }
+}
+
+function validatePostTitle(title: string) {
+  if (title.length < 2) {
+    return `That title's name is too short`;
+  }
+}
+
+const badRequest = (data: ActionData) => json(data, { status: 400 });
+
+export const action: ActionFunction = async ({ request }) => {
+  const userId = await requireUserId(request);
   const formData = await request.formData();
 
   const title = formData.get("title");
@@ -24,17 +50,29 @@ export const action: ActionFunction = async ({ request }) => {
 
   const errors: PostError = {};
   if (!title) errors.title = true;
-  if (!content) errors.markdown = true;
+  if (!content) errors.content = true;
 
   if (Object.keys(errors).length) {
-    return errors;
+    return badRequest({
+      formError: "Form not submitted correctly.",
+    });
   }
-  invariant(typeof title === "string");
-  invariant(typeof content === "string");
+  invariant(typeof title === "string", "expected title to be a string");
+  invariant(typeof content === "string", "expected content to be a string");
 
-  await createPost({ title, content });
+  const fieldErrors = {
+    title: validatePostTitle(title),
+    content: validatePostContent(content),
+  };
+  const fields = { title, content };
 
-  return redirect("/admin");
+  if (Object.values(fieldErrors).some(Boolean)) {
+    return badRequest({ fieldErrors, fields });
+  }
+
+  const newPost = await createPost({ title, content, authorId: userId });
+
+  return redirect(`/posts/${newPost?.id}`);
 };
 
 export default function NewPost() {

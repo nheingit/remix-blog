@@ -3,6 +3,7 @@ import { redirect } from "@remix-run/server-runtime";
 import { db } from "./utils/db.server";
 
 export type NewPost = {
+  authorId: string;
   title: string;
   content: string;
 };
@@ -21,9 +22,10 @@ export async function getPost(postId: string) {
   });
 }
 
-export async function createPost(post: NewPost) {
+export async function createPost(post: NewPost): Promise<Post | null> {
   const newPost = await db.post.create({
     data: {
+      authorId: post.authorId,
       title: post.title,
       content: post.content,
     },
