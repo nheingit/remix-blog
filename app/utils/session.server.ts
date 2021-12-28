@@ -1,26 +1,14 @@
 import { createCookieSessionStorage, redirect } from "remix";
 import { db } from "./db.server";
-import { User } from ".prisma/client";
-import { ethers } from "ethers";
 import dotenv from "dotenv";
-import { JsonRpcProvider } from "@ethersproject/providers";
 
 dotenv.config();
 
 type LoginRequest = {
   address: string;
-  nonce: string;
 };
 
-// const signer = provider.getSigner();
-// const address = await signer.getAddress();
-// const nonce = Math.floor(Math.random() * 10000002).toString();
-// const signature = await signer.signMessage(nonce);
-
-export async function login({ address, nonce }: LoginRequest) {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.PROVIDER_URL
-  );
+export async function login({ address }: LoginRequest) {
   const user = await db.user.findUnique({
     where: { address },
   });
@@ -54,6 +42,19 @@ export async function getUserId(request: Request) {
   return userId;
 }
 
+export async function getUser(request: Request) {
+  const userId = await getUserId(request);
+  if (typeof userId !== "string") return null;
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    });
+    return user;
+  } catch {
+    throw logout(request);
+  }
+}
+
 export async function requireUserId(
   request: Request,
   redirectTo: string = new URL(request.url).pathname
@@ -73,6 +74,15 @@ export async function createUserSession(userId: string, redirectTo: string) {
   return redirect(redirectTo, {
     headers: {
       "Set-Cookie": await storage.commitSession(session),
+    },
+  });
+}
+
+export async function logout(request: Request) {
+  const session = await storage.getSession(request.headers.get("Cookie"));
+  return redirect("/login", {
+    headers: {
+      "Set-Cookie": await storage.destroySession(session),
     },
   });
 }

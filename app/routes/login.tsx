@@ -113,7 +113,7 @@ export default function Login() {
     <div className="container">
       <div className="content" data-light="">
         <h1>Login</h1>
-        <button onClick={handleRegister}>Register/Login</button>
+        <button onClick={handleRegister}>Login with MetaMask</button>
       </div>
       <div className="links">
         <ul>

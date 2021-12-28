@@ -2,16 +2,26 @@ import {
   Link,
   Links,
   LiveReload,
+  LoaderFunction,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useCatch,
+  useLoaderData,
 } from "remix";
 import type { LinksFunction } from "remix";
 
 import globalStylesUrl from "~/styles/global.css";
 import darkStylesUrl from "~/styles/dark.css";
+import { Post, User } from "@prisma/client";
+import { db } from "./utils/db.server";
+import { getUser } from "./utils/session.server";
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const user = await getUser(request);
+  return user;
+};
 
 // https://remix.run/api/app#links
 export let links: LinksFunction = () => {
@@ -120,6 +130,8 @@ function Document({
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const user = useLoaderData<User | null>();
+
   return (
     <div className="remix-app">
       <header className="remix-app__header">
@@ -145,7 +157,18 @@ function Layout({ children }: { children: React.ReactNode }) {
                 <Link to="/admin">Admin</Link>
               </li>
               <li>
-                <Link to="/login">Login</Link>
+                {user ? (
+                  <div className="user-info">
+                    <span>{`hi ${user.address}`}</span>
+                    <form action="/logout" method="post">
+                      <button type="submit" className="button">
+                        Logout
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <Link to="/login">Login</Link>
+                )}
               </li>
             </ul>
           </nav>
