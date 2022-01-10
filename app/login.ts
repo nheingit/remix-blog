@@ -6,7 +6,9 @@ export interface Window {
   ethereum: any;
 }
 
-export const getOrCreateUser = async (address: string) => {
+export const getOrCreateUser = async (
+  address: string
+) => {
   let user = await db.user.findUnique({
     where: {
       address: address,
@@ -41,8 +43,20 @@ export const verifyUser = async (
   nonce: string
 ) => {
   let authenticated = false;
-  const decodedAddress = ethers.utils.verifyMessage(nonce, signature);
-  if (user.address.toLowerCase() === decodedAddress.toLowerCase())
+  const decodedAddress = ethers.utils.verifyMessage(
+    nonce,
+    signature
+  );
+  if (
+    user.address.toLowerCase() ===
+    decodedAddress.toLowerCase()
+  )
     authenticated = true;
   return authenticated;
 };
+
+export function concatAddress(address: string) {
+  let firstFour = address.slice(0, 5);
+  let lastFour = address.slice(-4);
+  return firstFour + ".." + lastFour;
+}
