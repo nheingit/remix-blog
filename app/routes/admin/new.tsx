@@ -82,24 +82,35 @@ export default function NewPost() {
   const transition = useTransition();
 
   return (
-    <Form method="post">
-      <p>
-        <label>
-          Post Title: {errors?.title && <em>Title is required</em>}
-          <input type="text" name="title" />
-        </label>
-      </p>
-      <p>
-        <label htmlFor="content">Content:</label>{" "}
-        {errors?.content && <em>Content is required</em>}
-        <br />
-        <textarea rows={20} name="content" />
-      </p>
-      <p>
-        <button type="submit">
-          {transition.submission ? "Creating..." : "Create Post"}
-        </button>
-      </p>
-    </Form>
+    <div className="flex justify-between">
+      <Form method="post" className="bg-red-200">
+        <p>
+          <label>
+            Post Title: {errors?.title && <em>Title is required</em>}
+            <input
+              className="bg-gray-200 rounded-lg"
+              type="text"
+              name="title"
+            />
+          </label>
+        </p>
+        <p>
+          <label htmlFor="content">Content:</label>{" "}
+          {errors?.content && <em>Content is required</em>}
+          <br />
+          <textarea
+            className="bg-gray-200 rounded-lg"
+            rows={20}
+            name="content"
+          />
+        </p>
+        <p>
+          <button type="submit">
+            {transition.submission ? "Creating..." : "Create Post"}
+          </button>
+        </p>
+      </Form>
+      <h1 className=" w-1/2 bg-blue-200">gm</h1>
+    </div>
   );
 }
