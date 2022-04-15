@@ -3,7 +3,7 @@ import type { MetaFunction } from "remix";
 // https://remix.run/api/conventions#meta
 export let meta: MetaFunction = () => {
   return {
-    title: "Remix Starter",
+    title: "Nheindev's Personal Website",
     description: "Welcome to remix!",
   };
 };
